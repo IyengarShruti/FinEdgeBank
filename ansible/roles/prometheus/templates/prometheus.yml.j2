@@ -1,0 +1,43 @@
+global:
+  scrape_interval: 15s
+  scrape_timeout: 10s
+  evaluation_interval: 1m
+rule_files:
+- /opt/prometheus-2.26.0.linux-amd64/alert-rules.yml
+scrape_configs:
+- job_name: flask-app-nlb
+  honor_timestamps: true
+  scrape_interval: 15s
+  scrape_timeout: 10s
+  metrics_path: /metrics
+  scheme: http
+  follow_redirects: true
+  static_configs:
+  - targets:
+    - a02b9b2d737d54516be9998b20ac64a5-2ce24c39d5eaf1d1.elb.eu-central-1.amazonaws.com
+
+- job_name: 'node-exporter'
+  kubernetes_sd_configs:
+    - role: endpoints
+      api_server: "https://917E6145DE52A5640BF472E1F52BDE63.gr7.eu-central-1.eks.amazonaws.com"
+      tls_config:
+        ca_file: '/opt/prometheus-2.26.0.linux-amd64/k8s-ca.crt'
+      bearer_token_file: '/opt/prometheus-2.26.0.linux-amd64/bearer.token'
+
+  relabel_configs:
+    - source_labels: [__meta_kubernetes_service_annotation_prometheus_io_scrape]
+      action: keep
+      regex: true
+    - source_labels: [__address__, __meta_kubernetes_service_annotation_prometheus_io_port]
+      action: replace
+      target_label: __address__
+      regex: (.+)(?::\d+);(\d+)
+      replacement: $1:$2
+    - action: replace
+      source_labels: [__meta_kubernetes_service_annotation_prometheus_io_path]
+      target_label: __metrics_path__
+      regex: (.+)
+    - source_labels: [__meta_kubernetes_endpoints_label_kubernetes_io_name]
+      regex: CoreDNS
+      action: drop
+

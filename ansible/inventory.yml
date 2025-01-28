@@ -1,0 +1,8 @@
+all:
+  children:
+    grafana:
+      hosts:
+        52.29.16.194:
+    prometheus:
+      hosts:
+        3.69.234.155:
